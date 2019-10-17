@@ -14,21 +14,24 @@ func rootHandler(w http.ResponseWriter, req *http.Request) {
 	io.WriteString(w, "ravireader")
 }
 
+// CRR is Card Races Results for json response.
+type CRR struct {
+	Card    veikkausapi.Card
+	Races   []veikkausapi.Race
+	Results []veikkausapi.Result
+}
+
 func jsonHandler(w http.ResponseWriter, req *http.Request) {
-
-	var result []interface{}
-
+	result := CRR{}
 	cards := veikkausapi.FetchCards()
 
 	for _, card := range cards {
 		if card.Country == "FI" {
-			fmt.Println(card)
+			result.Card = card
+			result.Races = veikkausapi.FetchRaces(card.CardID)
 
-			races := veikkausapi.FetchRaces(card.CardID)
-
-			for _, race := range races {
-				//fmt.Println(veikkausapi.FetchResult(race.RaceID))
-				result = append(result, veikkausapi.FetchResult(race.RaceID))
+			for _, race := range result.Races {
+				result.Results = append(result.Results, veikkausapi.FetchResult(race.RaceID))
 			}
 		}
 	}
