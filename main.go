@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io"
+	"html/template"
 	"log"
 	"net/http"
 
@@ -11,7 +11,29 @@ import (
 )
 
 func rootHandler(w http.ResponseWriter, req *http.Request) {
-	io.WriteString(w, "ravireader")
+
+	tmpl, err := template.ParseFiles("templates/index.html")
+	if err != nil {
+		panic(err)
+	}
+
+	result := []CRR{}
+	cards := veikkausapi.FetchCards()
+
+	for _, card := range cards {
+		if card.Country == "FI" {
+			crr := CRR{}
+			crr.Card = card
+			crr.Races = veikkausapi.FetchRaces(card.CardID)
+
+			for _, race := range crr.Races {
+				crr.Results = append(crr.Results, veikkausapi.FetchResult(race.RaceID))
+			}
+			result = append(result, crr)
+		}
+	}
+
+	tmpl.Execute(w, result)
 }
 
 // CRR is Card Races Results for json response.
@@ -22,17 +44,19 @@ type CRR struct {
 }
 
 func jsonHandler(w http.ResponseWriter, req *http.Request) {
-	result := CRR{}
+	result := []CRR{}
 	cards := veikkausapi.FetchCards()
 
 	for _, card := range cards {
 		if card.Country == "FI" {
-			result.Card = card
-			result.Races = veikkausapi.FetchRaces(card.CardID)
+			crr := CRR{}
+			crr.Card = card
+			crr.Races = veikkausapi.FetchRaces(card.CardID)
 
-			for _, race := range result.Races {
-				result.Results = append(result.Results, veikkausapi.FetchResult(race.RaceID))
+			for _, race := range crr.Races {
+				crr.Results = append(crr.Results, veikkausapi.FetchResult(race.RaceID))
 			}
+			result = append(result, crr)
 		}
 	}
 
