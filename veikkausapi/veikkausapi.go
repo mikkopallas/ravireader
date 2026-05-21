@@ -56,9 +56,12 @@ type Result struct {
 	Runners    []Runner
 }
 
+// BaseURL can be overridden in tests
+var BaseURL = "https://www.veikkaus.fi"
+
 // FetchCards ...
 func FetchCards() []Card {
-	resp, err := http.Get("https://www.veikkaus.fi/api/toto-info/v1/cards/today")
+	resp, err := http.Get(BaseURL + "/api/toto-info/v1/cards/today")
 	if err != nil {
 		panic(err)
 	}
@@ -80,7 +83,7 @@ func FetchCards() []Card {
 
 // FetchRaces ...
 func FetchRaces(cardID int) []Race {
-	resp, err := http.Get("https://www.veikkaus.fi/api/toto-info/v1/card/" + strconv.Itoa(cardID) + "/results")
+	resp, err := http.Get(BaseURL + "/api/toto-info/v1/card/" + strconv.Itoa(cardID) + "/results")
 	if err != nil {
 		panic(err)
 	}
@@ -102,7 +105,7 @@ func FetchRaces(cardID int) []Race {
 
 // FetchResults ...
 func FetchResult(raceID int) Result {
-	resp, err := http.Get("https://www.veikkaus.fi/api/toto-info/v1/race/" + strconv.Itoa(raceID) + "/competition-results")
+	resp, err := http.Get(BaseURL + "/api/toto-info/v1/race/" + strconv.Itoa(raceID) + "/competition-results")
 	if err != nil {
 		panic(err)
 	}
