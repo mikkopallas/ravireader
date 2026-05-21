@@ -3,32 +3,359 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Ravi Reader v0.1</title>
+    <title>Ravi Reader</title>
+    <!-- Import Inter font for premium typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        .card {
-            border: lightgray 1px solid;
-            margin-bottom: 10px;
-            padding: 10px;
+        :root {
+            /* Greyscale Palette */
+            --bg-color: #f4f4f5;
+            --text-main: #18181b;
+            --text-muted: #71717a;
+            --card-bg: #ffffff;
+            --border-color: #e4e4e7;
+            --hover-bg: #fafafa;
+            
+            /* Lime Accent */
+            --accent-lime: #84cc16;
+            --accent-lime-light: #ecfccb;
         }
 
-        .card-races {
-            list-style: none;
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
             padding: 0;
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        header {
+            background-color: var(--card-bg);
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid var(--border-color);
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: -0.025em;
+        }
+
+        .date-picker {
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 0.875rem;
+            color: var(--text-main);
+            background: var(--bg-color);
+            cursor: pointer;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .date-picker:focus {
+            border-color: var(--accent-lime);
+        }
+
+        .accent-dot {
+            color: var(--accent-lime);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+            gap: 2rem;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+        }
+
+        .card-header {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            background-color: var(--card-bg);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-header h2 {
+            margin: 0;
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .meet-date {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .card-body {
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        /* Accordion Styles */
+        details {
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--card-bg);
+            overflow: hidden;
+            transition: all 0.2s ease;
+        }
+
+        details[open] {
+            border-color: var(--accent-lime);
+            box-shadow: 0 0 0 1px var(--accent-lime);
+        }
+
+        summary {
+            padding: 1rem 1.25rem;
+            cursor: pointer;
+            list-style: none;
+            font-weight: 500;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--card-bg);
+            transition: background 0.2s ease;
+            user-select: none;
+        }
+
+        summary::-webkit-details-marker {
+            display: none;
+        }
+
+        summary:hover {
+            background: var(--hover-bg);
+        }
+
+        .race-title {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .race-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-color);
+            color: var(--text-muted);
+            border-radius: 9999px;
+            width: 28px;
+            height: 28px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        details[open] .race-number {
+            background: var(--accent-lime-light);
+            color: var(--accent-lime);
+        }
+
+        .race-type {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        .cancelled-badge {
+            background: #fee2e2;
+            color: #ef4444;
+            padding: 0.125rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .details-content {
+            border-top: 1px solid var(--border-color);
+            background: var(--hover-bg);
+        }
+
+        .race-meta {
+            padding: 1rem 1.25rem;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            gap: 1.5rem;
+        }
+
+        /* Minimal Table */
+        .runner-table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.875rem;
+        }
+
+        th {
+            padding: 0.75rem 1.25rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            border-bottom: 1px solid var(--border-color);
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 0.75rem 1.25rem;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-main);
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        .pos {
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        .horse-name {
+            font-weight: 500;
+        }
+        
+        .no-data {
+            padding: 2rem;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+            .container {
+                padding: 1rem;
+            }
         }
     </style>
 </head>
 <body>
-    <h1>Ravi Reader</h1>
-    {{ range . }}
-    <div class="card">
-        <h4>{{ .Card.TrackName }}</h4>
-        <ul class="card-races">
-            {{ range .Races }}
-            <li class="card-races-item">{{ .RaceNumber }} {{ .SeriesSpecification }}</li>
+    <header>
+        <h1>Ravi Reader<span class="accent-dot">.</span></h1>
+        <form method="GET" action="/">
+            <input type="date" name="date" class="date-picker" value="{{ .SelectedDate }}" onchange="this.form.submit()">
+        </form>
+    </header>
+
+    <main class="container">
+        {{ if not .Data }}
+        <div class="no-data">
+            <p>No cards available for {{ .SelectedDate }}.</p>
+        </div>
+        {{ end }}
+
+        <div class="grid">
+            {{ range .Data }}
+            {{ $crr := . }}
+            <article class="card">
+                <header class="card-header">
+                    <h2>{{ $crr.Card.TrackName }}</h2>
+                    <span class="meet-date">{{ $crr.Card.MeetDate }} {{ formatTime $crr.Card.FirstRaceStart }}</span>
+                </header>
+                <div class="card-body">
+                    {{ range $crr.Races }}
+                    {{ $race := . }}
+                    <details>
+                        <summary>
+                            <div class="race-title">
+                                <span class="race-number">{{ $race.RaceNumber }}</span>
+                                <span class="race-type">{{ $race.SeriesSpecification }}</span>
+                            </div>
+                            {{ if $race.CancelledRace }}
+                            <span class="cancelled-badge">Cancelled</span>
+                            {{ else }}
+                            <!-- Chevron icon -->
+                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--text-muted)">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
+                            {{ end }}
+                        </summary>
+
+                        {{ if not $race.CancelledRace }}
+                        <div class="details-content">
+                            <!-- Find the matching result for this race -->
+                            {{ $foundResult := false }}
+                            {{ range $crr.Results }}
+                                {{ if eq .RaceID $race.RaceID }}
+                                    {{ $foundResult = true }}
+                                    <div class="race-meta">
+                                        <span><strong>Time:</strong> {{ formatTime .StartTime }}</span>
+                                        <span><strong>Distance:</strong> {{ .Distance }}m</span>
+                                        <span><strong>Start:</strong> {{ .StartType }}</span>
+                                    </div>
+                                    <div class="runner-table-container">
+                                        <table>
+                                            <thead>
+                                                <tr>
+                                                    <th>Pos</th>
+                                                    <th>Horse</th>
+                                                    <th>Driver</th>
+                                                    <th>Time</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {{ range .Runners }}
+                                                <tr>
+                                                    <td class="pos">{{ formatPosition .Position }}</td>
+                                                    <td class="horse-name">{{ .HorseName }}</td>
+                                                    <td>{{ .DriverFirstName }} {{ .DriverLastName }}</td>
+                                                    <td>{{ if .KmTime }}{{ .KmTime }}{{ else }}-{{ end }}</td>
+                                                </tr>
+                                                {{ end }}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                {{ end }}
+                            {{ end }}
+
+                            {{ if not $foundResult }}
+                            <div class="no-data">
+                                Results for this race are not yet available.
+                            </div>
+                            {{ end }}
+                        </div>
+                        {{ end }}
+                    </details>
+                    {{ end }}
+                </div>
+            </article>
             {{ end }}
-        </ul>
-    </div>
-    {{ end }}
+        </div>
+    </main>
 </body>
 </html>

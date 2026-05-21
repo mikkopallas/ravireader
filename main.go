@@ -7,31 +7,95 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/mikcompany/ravireader/db"
 	"github.com/mikcompany/ravireader/updater"
 )
 
+type PageData struct {
+	SelectedDate string
+	Data         []db.CRR
+}
+
 func rootHandler(w http.ResponseWriter, req *http.Request) {
-	tmpl, err := template.ParseFiles("templates/index.html")
+	tmpl, err := template.New("index.html").Funcs(template.FuncMap{
+		"formatTime": func(ms int) string {
+			if ms == 0 {
+				return "-"
+			}
+			return time.UnixMilli(int64(ms)).Format("15:04")
+		},
+		"formatPosition": func(pos int) string {
+			if pos == 0 {
+				return "-"
+			}
+			if pos <= 100 {
+				return strconv.Itoa(pos)
+			}
+			switch pos {
+			case 101:
+				return "hll"
+			case 102:
+				return "hpl"
+			case 103:
+				return "hva"
+			case 104:
+				return "k"
+			case 105:
+				return "hyl"
+			case 106:
+				return "0"
+			case 107:
+				return "poissa"
+			default:
+				return "-"
+			}
+		},
+	}).ParseFiles("templates/index.html")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	result, err := db.FetchAllData()
+	date := req.URL.Query().Get("date")
+	if date == "" {
+		date = time.Now().Format("2006-01-02")
+	}
+
+	hasData, err := db.HasDataForDate(date)
+	if err == nil && !hasData {
+		// Fetch on-demand
+		updater.FetchAndSaveForDate(date)
+	}
+
+	result, err := db.FetchAllData(date)
 	if err != nil {
 		http.Error(w, "Failed to fetch data from database: " + err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	// db.FetchAllData returns []db.CRR, but template expects it directly
-	tmpl.Execute(w, result)
+	pageData := PageData{
+		SelectedDate: date,
+		Data:         result,
+	}
+
+	tmpl.Execute(w, pageData)
 }
 
 func jsonHandler(w http.ResponseWriter, req *http.Request) {
-	result, err := db.FetchAllData()
+	date := req.URL.Query().Get("date")
+	if date == "" {
+		date = time.Now().Format("2006-01-02")
+	}
+
+	hasData, err := db.HasDataForDate(date)
+	if err == nil && !hasData {
+		updater.FetchAndSaveForDate(date)
+	}
+
+	result, err := db.FetchAllData(date)
 	if err != nil {
 		http.Error(w, "Failed to fetch data from database: " + err.Error(), http.StatusInternalServerError)
 		return
