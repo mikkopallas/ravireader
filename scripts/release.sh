@@ -17,11 +17,13 @@ echo "Bumping version: $CURRENT_VERSION -> $NEXT_VERSION"
 echo "Generating CHANGELOG.md..."
 go run github.com/git-chglog/git-chglog/cmd/git-chglog@latest -o CHANGELOG.md --next-tag "$NEXT_VERSION"
 
-# Commit and Tag
-echo "Committing changelog and creating tag..."
-git add CHANGELOG.md
-git commit -m "chore(release): $NEXT_VERSION"
-git tag "$NEXT_VERSION"
-
-echo "✅ Release $NEXT_VERSION created successfully!"
-echo "Don't forget to push your changes and tags: git push --follow-tags"
+# Provide instructions to the user
+echo "================================================================"
+echo "✅ CHANGELOG.md has been generated for release $NEXT_VERSION!"
+echo "Please review the changes in CHANGELOG.md."
+echo ""
+echo "When you are ready to finalize the release, run the following:"
+echo "  git commit -am \"chore(release): $NEXT_VERSION\""
+echo "  git tag $NEXT_VERSION"
+echo "  git push --follow-tags"
+echo "================================================================"
