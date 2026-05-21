@@ -9,10 +9,11 @@ import (
 
 // Card ...
 type Card struct {
-	CardID    int
-	Country   string
-	TrackName string
-	MeetDate  string
+	CardID         int
+	Country        string
+	TrackName      string
+	MeetDate       string
+	FirstRaceStart int
 }
 
 // CardCollection ...
@@ -59,9 +60,17 @@ type Result struct {
 // BaseURL can be overridden in tests
 var BaseURL = "https://www.veikkaus.fi"
 
-// FetchCards ...
-func FetchCards() []Card {
-	resp, err := http.Get(BaseURL + "/api/toto-info/v1/cards/today")
+// FetchCards fetches cards for a specific date (e.g. '2026-05-20' or 'today').
+func FetchCards(date string) []Card {
+	if date == "" {
+		date = "today"
+	}
+	url := BaseURL + "/api/toto-info/v1/cards/today"
+	if date != "today" {
+		url = BaseURL + "/api/toto-info/v1/cards/date/" + date
+	}
+	
+	resp, err := http.Get(url)
 	if err != nil {
 		panic(err)
 	}

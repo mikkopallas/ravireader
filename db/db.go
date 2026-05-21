@@ -61,6 +61,7 @@ func createSchemas() error {
 			country VARCHAR,
 			track_name VARCHAR,
 			meet_date VARCHAR,
+			first_race_start BIGINT,
 			updated_at TIMESTAMP
 		)`,
 		`CREATE TABLE IF NOT EXISTS races (
@@ -114,7 +115,7 @@ func SaveCards(cards []veikkausapi.Card) error {
 	}
 	defer tx.Rollback()
 
-	stmt, err := tx.Prepare("INSERT OR REPLACE INTO cards (card_id, country, track_name, meet_date, updated_at) VALUES (?, ?, ?, ?, ?)")
+	stmt, err := tx.Prepare("INSERT OR REPLACE INTO cards (card_id, country, track_name, meet_date, first_race_start, updated_at) VALUES (?, ?, ?, ?, ?, ?)")
 	if err != nil {
 		return err
 	}
@@ -122,7 +123,7 @@ func SaveCards(cards []veikkausapi.Card) error {
 
 	now := time.Now()
 	for _, card := range cards {
-		_, err = stmt.Exec(card.CardID, card.Country, card.TrackName, card.MeetDate, now)
+		_, err = stmt.Exec(card.CardID, card.Country, card.TrackName, card.MeetDate, card.FirstRaceStart, now)
 		if err != nil {
 			return err
 		}
@@ -213,15 +214,28 @@ type CRR struct {
 	Results []veikkausapi.Result
 }
 
-// FetchAllData returns all current FI cards and their races/results from the database.
-func FetchAllData() ([]CRR, error) {
+// HasDataForDate quickly checks if we have any cards for the given date
+func HasDataForDate(date string) (bool, error) {
+	dbMutex.Lock()
+	defer dbMutex.Unlock()
+	
+	var count int
+	err := DB.QueryRow("SELECT count(*) FROM cards WHERE country = 'FI' AND meet_date = ?", date).Scan(&count)
+	if err != nil {
+		return false, err
+	}
+	return count > 0, nil
+}
+
+// FetchAllData returns all current FI cards and their races/results for a specific date.
+func FetchAllData(date string) ([]CRR, error) {
 	dbMutex.Lock()
 	defer dbMutex.Unlock()
 
 	var result []CRR
 
-	// Get FI Cards
-	cardRows, err := DB.Query("SELECT card_id, country, track_name, meet_date FROM cards WHERE country = 'FI'")
+	// Get FI Cards for date
+	cardRows, err := DB.Query("SELECT card_id, country, track_name, meet_date, first_race_start FROM cards WHERE country = 'FI' AND meet_date = ?", date)
 	if err != nil {
 		return nil, err
 	}
@@ -229,7 +243,7 @@ func FetchAllData() ([]CRR, error) {
 
 	for cardRows.Next() {
 		var c veikkausapi.Card
-		if err := cardRows.Scan(&c.CardID, &c.Country, &c.TrackName, &c.MeetDate); err != nil {
+		if err := cardRows.Scan(&c.CardID, &c.Country, &c.TrackName, &c.MeetDate, &c.FirstRaceStart); err != nil {
 			return nil, err
 		}
 

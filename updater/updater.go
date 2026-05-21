@@ -22,13 +22,22 @@ func Start(interval time.Duration) {
 }
 
 func update() {
-	log.Println("Updater: Fetching cards...")
-	cards := veikkausapi.FetchCards()
+	err := FetchAndSaveForDate("today")
+	if err != nil {
+		log.Printf("Updater: Background update failed: %v\n", err)
+	} else {
+		log.Println("Updater: Finished updating all data for today.")
+	}
+}
+
+// FetchAndSaveForDate fetches and saves data for a given date.
+func FetchAndSaveForDate(date string) error {
+	log.Printf("Updater: Fetching cards for %s...\n", date)
+	cards := veikkausapi.FetchCards(date)
 	
 	err := db.SaveCards(cards)
 	if err != nil {
-		log.Printf("Updater: Failed to save cards: %v\n", err)
-		return
+		return err
 	}
 
 	for _, card := range cards {
@@ -55,5 +64,5 @@ func update() {
 		}
 	}
 	
-	log.Println("Updater: Finished updating all data.")
+	return nil
 }
